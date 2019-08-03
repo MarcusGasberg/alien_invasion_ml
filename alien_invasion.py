@@ -80,10 +80,19 @@ class AlienInvasion:
         if self._check_play_button(mouse_pos):
             self._reset_game()
             pygame.mouse.set_visible(False)
-    
+        self.stats.game_active = True
+        
     def _check_play_button(self, pos):
         """Return wheter the play button has been clicked"""
         return self.play_button.rect.collidepoint(pos) and not self.stats.game_active
+    
+    def _reset_game(self):
+        self.stats.reset_stats()
+        self.aliens.empty()
+        self.bullets.empty()
+        self._create_fleet()
+        self.player_ship.center_ship()
+        self.settings.initialize_dynamic_settings()
 
     def _update_screen(self):
         """Updates the screen of the game"""
@@ -109,6 +118,7 @@ class AlienInvasion:
         collisions = pygame.sprite.groupcollide(
             self.bullets, self.aliens, True, True)
         if not self.aliens:
+            self.settings.increase_speed()
             self.bullets.empty()
             self._create_fleet()
 
@@ -180,13 +190,6 @@ class AlienInvasion:
     def _change_fleet_direction(self):
         self.settings.fleet_direction *= -1
 
-    def _reset_game(self):
-        self.stats.reset_stats()
-        self.aliens.empty()
-        self.bullets.empty()
-        self._create_fleet()
-        self.player_ship.center_ship()
-        self.stats.game_active = True
 
 if __name__ == "__main__":
     alien_invasion = AlienInvasion()
