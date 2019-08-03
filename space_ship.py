@@ -11,10 +11,9 @@ class SpaceShip:
 
         self.sprite = pygame.image.load("images/ship.bmp")
         self.rect = self.sprite.get_rect()
-        self.rect.midbottom = self.screen_rectangle.midbottom
+        self.center_ship()
         self.moving_right = False
         self.moving_left = False
-        self.x = float(self.rect.x)
 
     def update(self):
         if self.moving_right and self.rect.right < self.screen_rectangle.right:
@@ -27,3 +26,8 @@ class SpaceShip:
     def blit_ship(self):
         """Draw the ship at its current location."""
         self.screen.blit(self.sprite, self.rect)
+
+    def center_ship(self):
+        """Center the ship on the screen."""
+        self.rect.midbottom = self.screen_rectangle.midbottom
+        self.x = float(self.rect.x)
