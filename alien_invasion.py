@@ -22,7 +22,12 @@ class AlienInvasion:
         self.screen = pygame.display.set_mode(
             (self.settings.screen_width, self.settings.screen_height))
         self.player_ship = SpaceShip(self)
-        self.stats = GameStats(self)
+        try:
+            with open(file="high_score.txt",mode="r") as f:
+                high_score = int(f.read() or 0) 
+        except FileNotFoundError:
+            high_score = 0
+        self.stats = GameStats(game=self,high_score=high_score)
         self.scoreboard = Scoreboard(self)
         self.bullets = pygame.sprite.Group()
         self.aliens = pygame.sprite.Group()
@@ -46,13 +51,18 @@ class AlienInvasion:
         """Listens for game events like key presses etc"""
         for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    sys.exit()
+                    self._handle_exit()
                 elif event.type == pygame.KEYDOWN:
                     self._handle_key_down(event)
                 elif event.type == pygame.KEYUP:
                     self._handle_key_up(event)
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     self._handle_mouse_down(event)
+
+    def _handle_exit(self):
+        with open(file="high_score.txt",mode="w") as f:
+            f.write(str(self.stats.high_score))
+        sys.exit()
 
     def _handle_key_down(self, event):
         """Event handler for a key down event"""
@@ -96,6 +106,8 @@ class AlienInvasion:
         self.player_ship.center_ship()
         self.settings.initialize_dynamic_settings()
         self.scoreboard.prep_score()
+        self.scoreboard.prep_level()
+        self.scoreboard.prep_lives()
 
     def _update_screen(self):
         """Updates the screen of the game"""
@@ -128,6 +140,8 @@ class AlienInvasion:
         self.scoreboard.update_high_score()
         if not self.aliens:
             self.settings.increase_speed()
+            self.stats.level += 1
+            self.scoreboard.prep_level()
             self.bullets.empty()
             self._create_fleet()
 
@@ -148,6 +162,7 @@ class AlienInvasion:
         """Handle the ship being hit by an alien"""
         if self.stats.ships_left > 0:
             self.stats.ships_left -= 1
+            self.scoreboard.prep_lives()
             self.aliens.empty()
             self.bullets.empty()
             self._create_fleet()

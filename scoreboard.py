@@ -1,4 +1,6 @@
 import pygame.font
+from pygame.sprite import Group
+from space_ship import SpaceShip
 
 class Scoreboard:
     """A class to report scoring information"""
@@ -15,9 +17,11 @@ class Scoreboard:
         self.font = pygame.font.SysFont(None, 48)
         self.prep_score()
         self.prep_high_score()
+        self.prep_level()
+        self.prep_lives()
 
     def prep_score(self):
-        score_str = "{:,}".format(round(self.stats.score, -1))
+        score_str = "Points: {:,}".format(round(self.stats.score, -1))
         self.score_image = self.font.render(
             score_str, True, self.text_color, self.settings.bg_color)
         self.score_rect = self.score_image.get_rect()
@@ -32,10 +36,27 @@ class Scoreboard:
         self.high_score_rect.centerx = self.screen_rect.centerx
         self.high_score_rect.top = self.screen_rect.top
 
+    def prep_level(self):
+        level_str = f"Level: {str(self.stats.level)}"
+        self.level_image = self.font.render(
+            level_str, True, self.text_color, self.settings.bg_color)
+        self.level_rect = self.level_image.get_rect()
+        self.level_rect.left = self.screen_rect.left + 20
+        self.level_rect.top = self.score_rect.bottom + 10
+
+    def prep_lives(self):
+        self.ships = Group()
+        for ship_number in range(self.stats.ships_left, 0, -1):
+            ship = SpaceShip(self._game)
+            ship.rect.x = self.screen_rect.right - 10 - ship_number * ship.rect.width
+            ship.rect.y = self.screen_rect.top + 10
+            self.ships.add(ship)
 
     def draw(self):
         self.screen.blit(self.score_image, self.score_rect)
         self.screen.blit(self.high_score_image, self.high_score_rect)
+        self.screen.blit(self.level_image, self.level_rect)
+        self.ships.draw(self.screen)
 
     def update_high_score(self):
         """Updates the high score if the high score is beaten"""

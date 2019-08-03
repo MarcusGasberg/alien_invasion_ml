@@ -1,16 +1,17 @@
 import pygame
-
-class SpaceShip:
+from pygame.sprite import Sprite
+class SpaceShip(Sprite):
     """A class to manage a space ship in the Alien Invasion game"""
 
     def __init__(self, game):
         """Initialize the ship and set its starting position."""
+        super().__init__()
         self.screen = game.screen
         self.settings = game.settings
         self.screen_rectangle = game.screen.get_rect()
 
-        self.sprite = pygame.image.load("images/ship.bmp")
-        self.rect = self.sprite.get_rect()
+        self.image = pygame.image.load("images/ship.bmp")
+        self.rect = self.image.get_rect()
         self.center_ship()
         self.moving_right = False
         self.moving_left = False
@@ -25,7 +26,7 @@ class SpaceShip:
 
     def draw(self):
         """Draw the ship at its current location."""
-        self.screen.blit(self.sprite, self.rect)
+        self.screen.blit(self.image, self.rect)
 
     def center_ship(self):
         """Center the ship on the screen."""
