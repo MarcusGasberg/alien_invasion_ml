@@ -23,7 +23,7 @@ class SpaceShip:
 
         self.rect.x = self.x
 
-    def blit_ship(self):
+    def draw(self):
         """Draw the ship at its current location."""
         self.screen.blit(self.sprite, self.rect)
 
