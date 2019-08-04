@@ -1,4 +1,5 @@
 import sys
+import random
 from time import sleep
 import pygame
 from game_settings import GameSettings
@@ -9,6 +10,7 @@ from game_stats import GameStats
 from text_button import TextButton
 from scoreboard import Scoreboard
 from game_factory import GameFactory
+from alien_laser import AlienLaser
 
 
 class AlienInvasion:
@@ -28,9 +30,10 @@ class AlienInvasion:
                 high_score = int(f.read() or 0) 
         except FileNotFoundError:
             high_score = 0
-        self.stats = GameStats(game=self,high_score=high_score)
+        self.stats = GameStats(game=self, high_score=high_score)
         self.scoreboard = Scoreboard(self)
         self.bullets = pygame.sprite.Group()
+        self.lasers = pygame.sprite.Group()
         self.aliens = pygame.sprite.Group()
         self.game_factory = GameFactory(self)
         self._create_fleet()
@@ -47,6 +50,7 @@ class AlienInvasion:
                 self.player_ship.update()
                 self._update_bullets()
                 self._update_aliens()
+                self._update_lasers()
             self._update_screen()
     
     def _listen_for_event(self):
@@ -114,13 +118,15 @@ class AlienInvasion:
     def _update_screen(self):
         """Updates the screen of the game"""
         self.screen.fill(self.settings.bg_color)
-        self.scoreboard.draw()
         self.player_ship.draw()
+        self.aliens.draw(self.screen)
         for bullet in self.bullets.sprites():
             bullet.draw_bullet()
-        self.aliens.draw(self.screen)
+        for laser in self.lasers.sprites():
+            laser.draw()
         if not self.stats.game_active:
             self.play_button.draw()
+        self.scoreboard.draw()
         pygame.display.flip()
     
     def _update_bullets(self):
@@ -131,6 +137,7 @@ class AlienInvasion:
             if bullet.rect.bottom <= 0:
                 self.bullets.remove(bullet)
         self._handle_bullet_alien_collisions()
+    
     
     def _handle_bullet_alien_collisions(self):
         collisions = pygame.sprite.groupcollide(
@@ -147,18 +154,41 @@ class AlienInvasion:
             self.bullets.empty()
             self._create_fleet()
 
+    def _update_lasers(self):
+        """Updates the lasers on the screen. Removes them if not on screen"""
+        self.lasers.update()
+        # Get rid of bullets that have disappeared.
+        for laser in self.lasers.copy():
+            if laser.rect.top >= self.settings.screen_height:
+                self.lasers.remove(laser)
+        self._handle_laser_player_collisions()
+
+    def _handle_laser_player_collisions(self):
+        if pygame.sprite.spritecollideany(self.player_ship, self.lasers):
+            self._handle_ship_hit()
+
     def _update_aliens(self):
         """Update the positions of all aliens"""
         if self._check_fleet_edges():
             self._move_fleet_down()
             self._change_fleet_direction()
+            self._fire_laser()
         self.aliens.update()
         if self._check_alien_ship_collisions() or self._check_aliens_bottom():
             self._handle_ship_hit()
     
+    def _fire_laser(self):
+        if self.settings.lasers_allowed > len(self.lasers):
+            for lasers_to_fire in range(self.settings.lasers_allowed - len(self.lasers)):
+                shooter_index = random.randint(1, len(self.aliens)) - 1
+                sprites = self.aliens.sprites()
+                shooter = sprites[shooter_index]
+                laser = AlienLaser(self, shooter)
+                self.lasers.add(laser)
+
     def _check_alien_ship_collisions(self):
         """Checks if any collisions between ship and aliens"""
-        return pygame.sprite.spritecollideany(self.player_ship,self.aliens)
+        return pygame.sprite.spritecollideany(self.player_ship, self.aliens)
             
 
     def _handle_ship_hit(self):
@@ -168,6 +198,7 @@ class AlienInvasion:
             self.scoreboard.prep_lives()
             self.aliens.empty()
             self.bullets.empty()
+            self.lasers.empty()
             self._create_fleet()
             self.player_ship.center_ship()
             sleep(0.5)
